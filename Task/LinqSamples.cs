@@ -25,41 +25,142 @@ namespace SampleQueries
 
 		private DataSource dataSource = new DataSource();
 
-		[Category("Restriction Operators")]
-		[Title("Where - Task 1")]
-		[Description("This sample uses the where clause to find all elements of an array with a value less than 5.")]
-		public void Linq1()
-		{
-			int[] numbers = { 5, 4, 1, 3, 9, 8, 6, 7, 2, 0 };
+        [Category("Task")]
+        [Title("Task001")]
+        [Description("Displays all customers with sum of orders total greater than X")]
+        public void Linq001()
+        {
+            decimal x = 10000;
+            var customersList = dataSource.Customers
+                .Where(c => c.Orders.Sum(o => o.Total) > x)
+                .Select(c => new
+                {
+                    CustomerName = c.CompanyName,
+                    TotalSum = c.Orders.Sum(o => o.Total)
+                });
 
-			var lowNums =
-				from num in numbers
-				where num < 5
-				select num;
+            Console.WriteLine($"Customers with sum greater than {x}:");
+            Console.WriteLine();
+            foreach (var c in customersList)
+            {
+                ObjectDumper.Write(c);
+            }
 
-			Console.WriteLine("Numbers < 5:");
-			foreach (var x in lowNums)
-			{
-				Console.WriteLine(x);
-			}
-		}
+            x = 20000;
 
-		[Category("Restriction Operators")]
-		[Title("Where - Task 2")]
-		[Description("This sample return return all presented in market products")]
+            Console.WriteLine();
+            Console.WriteLine($"Customers with sum greater than {x}:");
+            Console.WriteLine();
+            foreach (var c in customersList)
+            {
+                ObjectDumper.Write(c);
+            }
+        }
 
-		public void Linq2()
-		{
-			var products =
-				from p in dataSource.Products
-				where p.UnitsInStock > 0
-				select p;
+        [Category("Task")]
+        [Title("Task002")]
+        [Description("For each customer, make a list of suppliers located in the same country and the same city")]
+        public void Linq002()
+        {
+            var customersWithSuppliers = dataSource.Customers
+                .Select(c => new
+                {
+                    Customer = c,
+                    Suppliers = dataSource.Suppliers.Where(s => s.City == c.City && s.Country == c.Country)
+                });
 
-			foreach (var p in products)
-			{
-				ObjectDumper.Write(p);
-			}
-		}
+            Console.WriteLine($"Without grouping:");
+            foreach (var c in customersWithSuppliers)
+            {
+                Console.Write($"Customer name: {c.Customer.CompanyName} ");
+                Console.WriteLine($"city: {c.Customer.City}, country: {c.Customer.Country} ");
+                Console.WriteLine("Suppliers: ");
+                foreach (var s in c.Suppliers)
+                {
+                    Console.WriteLine($"Supplier name: {s.SupplierName}, city:{s.City}, country:{s.Country};");
+                }
+                Console.WriteLine();
+            }
 
-	}
+            var groupedCustomersWithSuppliers = dataSource.Customers.GroupBy(c => new { c.Country, c.City },
+                g => new
+                {
+                    Customer = g, 
+                    Suppliers = dataSource.Suppliers.Where(s => s.City == g.City && s.Country == g.Country)
+                });
+
+            Console.WriteLine($"With grouping by country and city:");
+            foreach (var c in groupedCustomersWithSuppliers)
+            {
+                Console.Write($"Country: {c.Key.Country}, City: {c.Key.City}: ");
+               
+                Console.WriteLine();
+                foreach (var g in c)
+                {
+                    Console.WriteLine($"Customer name: {g.Customer.CompanyName} ");
+
+                    Console.WriteLine("Suppliers: ");
+                    foreach (var s in g.Suppliers)
+                    {
+                        Console.WriteLine($"Supplier name: {s.SupplierName}, city:{s.City}, country:{s.Country};");
+                    }
+                }
+                Console.WriteLine();
+            }
+        }
+
+        [Category("Task")]
+        [Title("Task 003")]
+        [Description("Displays all customers who has order with total greater than X")]
+        public void Linq003()
+        {
+            decimal x = 5000;
+            var customers = dataSource.Customers.Where(c => c.Orders.Any(s => s.Total > x));
+
+            foreach (var c in customers)
+            {
+                ObjectDumper.Write(c);
+            }
+        }
+
+        [Category("Task")]
+        [Title("Task 004")]
+        [Description("Displays all customers with their first orders month and year")]
+        public void Linq004()
+        {
+            var customers = dataSource.Customers.Where(c => c.Orders.Any())
+                .Select(c => new
+                {
+                    ClientName = c.CompanyName,
+                    StartDate = c.Orders.Min(o => o.OrderDate)
+                });
+
+            foreach (var c in customers)
+            {
+                ObjectDumper.Write(c);
+            }
+        }
+
+        [Category("Task")]
+        [Title("Task 005")]
+        [Description("Displays all customers with their first orders month and year ordered by:year, month, sum of orders total, clientName")]
+        public void Linq005()
+        {
+            var customers = dataSource.Customers.Where(c => c.Orders.Any())
+                .Select(c => new
+                {
+                    ClientName = c.CompanyName,
+                    StartDate = c.Orders.Min(o => o.OrderDate),
+                    Total = c.Orders.Sum(o => o.Total)
+                }).OrderByDescending(c => c.StartDate.Year)
+                .ThenByDescending(c => c.StartDate.Month)
+                .ThenByDescending(c => c.Total)
+                .ThenBy(c => c.ClientName); ;
+
+            foreach (var c in customers)
+            {
+                ObjectDumper.Write(c);
+            }
+        }
+    }
 }
