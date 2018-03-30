@@ -162,5 +162,65 @@ namespace SampleQueries
                 ObjectDumper.Write(c);
             }
         }
+
+        [Category("Task")]
+        [Title("Task 006")]
+        [Description("Displays all customers with not number postal code or without region or whithout operator's code")]
+        public void Linq006()
+        {
+            var customers = dataSource.Customers.Where(
+                c => c.PostalCode != null && c.PostalCode.Any(sym => sym < '0' || sym > '9')
+                    || string.IsNullOrWhiteSpace(c.Region)
+                    || c.Phone.FirstOrDefault() != '(');
+
+            foreach (var c in customers)
+            {
+                ObjectDumper.Write(c);
+            }
+        }
+
+
+        [Category("Task")]
+        [Title("Task 007")]
+        [Description("Groups products by categories then by units in stock > 0 then order by unitPrice")]
+        public void Linq007()
+        {
+            var groupedProducts = dataSource.Products
+                .GroupBy(p => p.Category)
+                .Select(g => new
+                {
+                    Category = g.Key,
+                    ProductsByStock = g.GroupBy(p => p.UnitsInStock > 0)
+                    .Select( s => new {
+                        HasInStock = s.Key,
+                        Products = s.OrderBy(p => p.UnitPrice)
+                    })
+            });
+
+            foreach (var p in groupedProducts)
+            {
+                ObjectDumper.Write(p,2);
+            }
+        }
+
+        [Category("Task")]
+        [Title("Task 008")]
+        [Description("Groups products by price: Cheap, Average price, Expensive")]
+        public void Linq008()
+        {
+            var groupedProducts = dataSource.Products
+                .GroupBy(p => p.UnitPrice < 10.0000M ? "Cheap" 
+                : p.UnitPrice < 50.0000M ? "Average" : "Expensive");
+
+            foreach (var g in groupedProducts)
+            {
+                Console.WriteLine(g.Key);
+                foreach (var t in g)
+                {
+                    ObjectDumper.Write(t);
+                }
+                Console.WriteLine();
+            }
+        }
     }
 }
