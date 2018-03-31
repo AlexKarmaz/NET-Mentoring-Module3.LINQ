@@ -26,7 +26,7 @@ namespace SampleQueries
 		private DataSource dataSource = new DataSource();
 
         [Category("Task")]
-        [Title("Task001")]
+        [Title("Task 001")]
         [Description("Displays all customers with sum of orders total greater than X")]
         public void Linq001()
         {
@@ -58,7 +58,7 @@ namespace SampleQueries
         }
 
         [Category("Task")]
-        [Title("Task002")]
+        [Title("Task 002")]
         [Description("For each customer, make a list of suppliers located in the same country and the same city")]
         public void Linq002()
         {
@@ -220,6 +220,80 @@ namespace SampleQueries
                     ObjectDumper.Write(t);
                 }
                 Console.WriteLine();
+            }
+        }
+
+        [Category("Task")]
+        [Title("Task 009")]
+        [Description("Counts average order sum and average client's intensity for every city")]
+        public void Linq009()
+        {
+            var cityStats = dataSource.Customers.GroupBy(c => c.City)
+                .Select(g => new
+                {
+                    City = g.Key,
+                    AverageOrderSum = g.Average(s => s.Orders.Sum(o => o.Total)),
+                    ClientIntensity = g.Average(s => s.Orders.Length)
+                });
+
+            foreach (var g in cityStats)
+            {
+                Console.WriteLine( $"City: {g.City}, Average order sum: {g.AverageOrderSum}, Client intensity: {g.ClientIntensity}.");
+            }
+        }
+
+        [Category("Task")]
+        [Title("Task 010")]
+        [Description("Displays clients activity statistic by month (without year), by year and  by year and month")]
+        public void Linq010()
+        {
+            var clientStats = dataSource.Customers
+                .Select(c => new
+                {
+                   ClientId = c.CustomerID,
+                   MonthsStatistic = c.Orders.GroupBy(o => o.OrderDate.Month)
+                                    .Select(g => new
+                                    {
+                                        Month = g.Key,
+                                        OrderCount = g.Count()
+                                    }),
+                   YearsStatistic = c.Orders.GroupBy(o => o.OrderDate.Year)
+                                    .Select(g => new
+                                    {
+                                        Year = g.Key,
+                                        OrderCount =g.Count()
+                                    }),
+                   YearsAndMonthStatistic = c.Orders.GroupBy(o => new { o.OrderDate.Year, o.OrderDate.Month })
+                                           .Select(g => new
+                                           {
+                                               Year = g.Key.Year,
+                                               Month = g.Key.Month,
+                                               OrderCount = g.Count()
+                                           })
+
+                });
+
+            foreach (var g in clientStats)
+            {
+                Console.WriteLine($"ClientId: {g.ClientId}");
+                Console.WriteLine("Months statistic:");
+                foreach (var ms in g.MonthsStatistic)
+                {
+                    Console.WriteLine($"Month: {ms.Month} Orders count: {ms.OrderCount}");
+                }
+                Console.WriteLine("");
+                Console.WriteLine("Years statistic:");
+                foreach (var year in g.YearsStatistic)
+                {
+                    Console.WriteLine($"Year: {year.Year} Orders count: {year.OrderCount}");
+                }
+                Console.WriteLine("");
+                Console.WriteLine("Year and month statistic:");
+                foreach (var ym in g.YearsAndMonthStatistic)
+                {
+                    Console.WriteLine($"Year: {ym.Year} Month: {ym.Month} Orders count: {ym.OrderCount}");
+                }
+                Console.WriteLine("");
             }
         }
     }
